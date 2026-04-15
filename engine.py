@@ -13,7 +13,7 @@ class OSINTEngine:
 
     H_COMMON = {
         "h_mid": 101846893,
-        "h_token": "UqXfaQAAAABtDxIGAAAAAD+OncBQZI42AA==",
+        "h_token": "nYzaaQAAAABtDxIGAAAAAG8pJy8vdR8wAA==",
         "h_app": 0,
         "h_av": "3.7.0",
         "h_dt": 1,
@@ -81,23 +81,41 @@ class OSINTEngine:
             return None
 
         u = member
-        g = u.get("google_user") or {}
+        
+        # Social Fallbacks (Google, Facebook, Apple)
+        g = u.get("google_user")
+        f = u.get("facebook_user")
+        a = u.get("apple_user")
+        
+        login_type = "Normal"
+        social_data = {}
+        
+        if g:
+            login_type = "Google"
+            social_data = g
+        elif f:
+            login_type = "Facebook"
+            social_data = f
+        elif a:
+            login_type = "Apple"
+            social_data = a
 
         result = {
-            "nick": g.get("nick") if u.get("google_user") else u.get("nick"),
+            "nick": social_data.get("nick") if social_data else u.get("nick"),
             "app_nick": u.get("nick"),
-            "google_nick": g.get("nick"),
-            "open_id": g.get("open_id") if u.get("google_user") else None,
+            "social_nick": social_data.get("nick") if social_data else None,
+            "login_type": login_type,
+            "open_id": social_data.get("open_id") if social_data else None,
             "avatar": u.get("avatar"),
-            "google_avatar": g.get("avatar") if u.get("google_user") else None,
-            "email": g.get("email") if u.get("google_user") else None,
+            "social_avatar": social_data.get("avatar") if social_data else None,
+            "email": social_data.get("email") if social_data else None,
             "login_device": u.get("login_device"),
             "last_login_time": u.get("last_login_time"),
             "first_login": u.get("first_login_info") or {},
             "is_online": u.get("is_online", False),
             "vip_level": u.get("vip_level", 0),
         }
-        print(f"[OSINT] ✅ Got detail: {result.get('app_nick')} / {result.get('email')} / IP: {(result.get('first_login') or {}).get('ip')}")
+        print(f"[OSINT] ✅ Got detail: {result.get('app_nick')} / Type: {login_type} / Email: {result.get('email')}")
         return result
 
     # ─── ANA ARAMA ───
@@ -122,12 +140,13 @@ class OSINTEngine:
                         "id": str(mid),
                         "mid": str(mid),
                         "pretty_id": str(pretty_id or "—"),
-                        "nickname": detail.get("app_nick") or detail.get("nick") or item.get("nick") or "Unknown",
-                        "google_nickname": detail.get("google_nick") or "—",
+                        "nickname": detail.get("app_nick") or item.get("nick") or "Unknown",
+                        "social_nickname": detail.get("social_nick") or "—",
+                        "login_type": detail.get("login_type"),
                         "email": detail.get("email") or "—",
                         "open_id": detail.get("open_id") or "—",
                         "avatar_url": item.get("avatar") or detail.get("avatar"),
-                        "google_avatar_url": detail.get("google_avatar"),
+                        "social_avatar_url": detail.get("social_avatar"),
                         "last_login_time": detail.get("last_login_time") or "—",
                         "login_device": detail.get("login_device") or "—",
                         "first_login_ip": first.get("ip") or "—",
@@ -140,11 +159,12 @@ class OSINTEngine:
                         "mid": str(mid),
                         "pretty_id": str(pretty_id or "—"),
                         "nickname": item.get("nick") or "Unknown",
-                        "google_nickname": "—",
+                        "social_nickname": "—",
+                        "login_type": "None",
                         "email": "—",
                         "open_id": "—",
                         "avatar_url": item.get("avatar"),
-                        "google_avatar_url": None,
+                        "social_avatar_url": None,
                         "last_login_time": "—",
                         "login_device": "—",
                         "first_login_ip": "—",
